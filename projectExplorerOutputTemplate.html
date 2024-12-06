@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Project Explorer</title>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+		<link rel="stylesheet" href="{{basePath}}/pe.css">
+	</head>
+	<body>
+		<div class="fc h100">
+			<div class="fr g10 center" style="border-bottom: 1px solid black;">
+				<div class="logo"><img src="{{basePath}}/logo.png"></div><div class="title">Project Explorer</div>
+			</div>
+			<div class="mainContainer fr g10 p10box">
+				<div class="panelLeft scroll fc g10">Left</div>
+				<div class="panelCenter f1 scroll"></div>
+				<div class="panelRight scroll">Right</div>
+			</div>
+		</div>
+		<template id="tvItem">
+			<div class="tvItem p10box fc g10" data-key="{{key}}">
+				<div class="fr g10 tvItemToggle">
+					<div><i class="fa-solid fa-caret-right"></i></div>
+					<div class="tvItemTitle">{{label}}</div>
+				</div>
+				<div class="tvItemContent hidden" data-rendered="false">
+					{{content}}
+				</div>
+			</div>
+		</template>
+		<script src="https://code.highcharts.com/highcharts.js"></script>
+		<script src="https://code.highcharts.com/modules/sankey.js"></script>
+		<script src="https://code.highcharts.com/modules/dependency-wheel.js"></script>
+		<script src="https://code.highcharts.com/modules/exporting.js"></script>
+		<script src="https://code.highcharts.com/modules/export-data.js"></script>
+		<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.0/split.min.js"></script>
+		<script src="{{basePath}}/pe.js"></script>
+		<script>
+			
+			const basePaths = {{basePaths}};
+			const mainData = JSON.parse({{parsedObject}});
+			
+			document.addEventListener('DOMContentLoaded', () => {
+				Split(['.panelLeft', '.panelCenter', '.panelRight'], {
+					sizes: [10, 80, 10],
+					minSize: 100,
+					gutterSize: 7,
+					direction: 'horizontal',
+					cursor: 'col-resize'
+				});
+				
+				PE.init();
+			});
+			
+		</script>
+	</body>
+</html>
