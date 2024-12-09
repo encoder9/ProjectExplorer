@@ -10,11 +10,21 @@
 	<body>
 		<div class="fc h100">
 			<div class="fr g10 center" style="border-bottom: 1px solid black;">
-				<div class="logo"><img src="{{basePath}}/logo.png"></div><div class="title">Project Explorer</div>
+				<div class="logo"><img src="/home/bradley/peR5/logo.png"></div><div class="title">Project Explorer</div>
 			</div>
 			<div class="mainContainer fr g10 p10box">
 				<div class="panelLeft scroll fc g10">Left</div>
-				<div class="panelCenter f1 scroll"></div>
+				<div class="panelCenter f1">
+					<div class="toolbar">
+						<div>
+							<select id="graphType">
+								<option value="-1" selected>No graph</option>
+								<option value="dependencyWheel">Dependencies</option>
+							</select>
+						</div>
+					</div>
+					<div class="panelContent"></div>
+				</div>
 				<div class="panelRight scroll">Right</div>
 			</div>
 		</div>
@@ -27,6 +37,15 @@
 				<div class="tvItemContent hidden" data-rendered="false">
 					{{content}}
 				</div>
+			</div>
+		</template>
+		<template id="tsDepView">
+			<div class="fr g10 h100">
+				<div class="filesList scroll h100">
+					<select id="tsDepFiles" style="height: 100%;" multiple>
+						{{files}}
+					</select></div>
+				<div class="chart f1 tsDepChart"></div>
 			</div>
 		</template>
 		<script src="https://code.highcharts.com/highcharts.js"></script>

@@ -38,7 +38,6 @@ html, body {
 .toolbar {
 	height: 50px;
 	background-color: #f0f0f0;
-	border-bottom: 1px solid #e0e0e0;
 }
 
 .chartContainer, .chart {
@@ -72,4 +71,12 @@ html, body {
 .tvItemToggle:hover {
 	background-color: #e0e0e0;
 	cursor: pointer;
+}
+
+.panelContent {
+	height: calc(100% - 50px);
+}
+
+.filesList {
+	width: fit-content;
 }

@@ -5,6 +5,8 @@ class PE {
 		PE.renderLeftPanel();
 		PE.displayTypescriptContent();
 		// qs('.mainContainer', mainContainer => { initCharts(mainContainer); });
+		
+		e('change', PE.graphTypeChangeHandler, qs('#graphType'));
 	}
 	
 	//#region Main Functions
@@ -27,12 +29,22 @@ class PE {
 		
 	}
 	
+	static graphTypeChangeHandler(event) {
+		const graphType = event.target.value;
+		PE.currentChart = graphType;
+		
+		qs('.panelContent', panelContent => {
+			panelContent.innerHTML = '';
+			if (graphType != '-1') { PE.initCharts(panelContent); }
+		});
+	}
+	
 	//#endregion
 	
 	//#region TreeView Functions
 	
 	static renderTreeView(key, parentKey = '') {
-		return PE.render(ht('tvItem'), {
+		return render(ht('tvItem'), {
 			label: key,
 			key: parentKey == '' ? key : `${parentKey}___${key}`,
 			content: 'Loading...'
@@ -88,38 +100,8 @@ class PE {
 	//#region Graphing Functions
 	
 	static initCharts(container) {
-		if (currentChart === 'dependencyWheel') { PE.renderDependencyWheel(container); }
-		else if (currentChart === 'networkGraph') { PE.renderNetworkGraph(container); }
-	}
-	
-	static renderDependencyWheel(container) {
-		Highcharts.chart(container, {
-			title: {
-				text: 'Dependency Wheel'
-			},
-			accessibility: {
-				point: {
-					valueDescriptionFormat: '{index}. From {point.from} to {point.to}: {point.weight}.'
-				}
-			},
-			series: [{
-				keys: ['from', 'to', 'weight'],
-				data: PE.getTSDepWheelData(),
-				type: 'dependencywheel',
-				name: 'Typescript dependencies',
-				dataLabels: {
-					color: '#333',
-					style: {
-						textOutline: 'none'
-					},
-					textPath: {
-						enabled: true
-					},
-					distance: 10
-				},
-				size: '95%'
-			}]
-		});
+		if (PE.currentChart === 'dependencyWheel') { PE.renderTSDepChart(container); }
+		else if (PE.currentChart === 'networkGraph') { PE.renderNetworkGraph(container); }
 	}
 	
 	static renderNetworkGraph(container) {
@@ -286,11 +268,12 @@ class PE {
 	
 	//#region Typescript Data Functions
 	
-	static getTSRelationships() {
+	static getTSRelationships(filter = null) {
 		const tsData = PE.getKeysFromCommonBase(mainData.ts);
 		const refs = {};
+		const keys = filter == null ? Object.keys(tsData) : Object.keys(tsData).filter(key => key == filter);
 		
-		for (const [key, value] of Object.entries(tsData)) {
+		for (const key of keys) {
 			const parts = key.split('/');
 			
 			if (parts.length > 0) {
@@ -312,27 +295,65 @@ class PE {
 		return refs;
 	}
 	
-	static getTSDepWheelData() {
-		const refs = PE.getTSRelationships();
+	static renderTSDepChart(container) {
+		container.innerHTML = render(ht('tsDepView'), {
+			files: Object.keys(PE.getKeysFromCommonBase(mainData.ts)).sort((a, b) => a.localeCompare(b, undefined, {sensitivity: 'base'})).map(key => `<option value="${key}">${key}</option>`).join('\n')
+		});
 		
+		e('change', PE.tsDepFilesChangeHandler, qs('#tsDepFiles'));
+	}
+	
+	static tsDepFilesChangeHandler(event) {
+		debounce('tsDepFilesChangeHandler', 500, () => {
+			const select = event.target;
+			
+			if (select.selectedOptions.length > 0) {
+				qs('.tsDepChart', tsDepChart => {
+					Highcharts.chart(tsDepChart, {
+						title: {
+							text: 'Dependency Wheel'
+						},
+						accessibility: {
+							point: {
+								valueDescriptionFormat: '{index}. From {point.from} to {point.to}: {point.weight}.'
+							}
+						},
+						series: [{
+							keys: ['from', 'to', 'weight'],
+							data: PE.getTSDepWheelData(Array.from(select.selectedOptions).map(option => option.value)),
+							type: 'dependencywheel',
+							name: 'Typescript dependencies',
+							dataLabels: {
+								color: '#333',
+								style: {
+									textOutline: 'none'
+								},
+								textPath: {
+									enabled: true
+								},
+								distance: 10
+							},
+							size: '95%'
+						}]
+					});		
+				});
+			}
+		});
+	}
+	
+	static getTSDepWheelData(filter = null) {
+		const refs = PE.getTSRelationships(filter);
 		const wheelData = [];
-		
-		// for (const key of Object.keys(refs)) {
+		console.log(refs);
+
+		// Push the data into the wheelData array
+		// for (const key of refs) {
 		// 	for (const childKey of Object.keys(refs[key])) {
 		// 		wheelData.push([key, childKey, refs[key][childKey]]);
 		// 	}
 		// }
-		
+
 		return wheelData;
-		
-		// return [
-		// 	['Brazil', 'Portugal', 5],
-		// 	['Brazil', 'France', 1],
-		// 	['Brazil', 'France2', 1],
-		// 	['Brazil', 'France3', 1],
-		// 	['Brazil', 'France4', 1],
-		// 	['Brazil', 'France5', 1],
-		// ];
 	}
 	
 	//#endregion
@@ -351,16 +372,6 @@ class PE {
 		}
 		
 		return newObj;
-	}
-	
-	static render(htmlString, dataObject) {
-		for (const i in dataObject) {
-			if (dataObject.hasOwnProperty(i)) {
-				htmlString = htmlString.replace(new RegExp('{{' + i + '}}', 'g'), dataObject[i]);
-			}
-		}
-		
-		return htmlString;
 	}
 	
 	static ParseString_AccessProperty(object, property) {
@@ -441,6 +452,27 @@ const e = (eventNames, eventHandler, context, once = false) => {
 				context.addEventListener(ename, eventHandler, options);
 			}
 		}
+	}
+};
+
+const render = (htmlString, dataObject) => {
+	for (const i in dataObject) {
+		if (dataObject.hasOwnProperty(i)) {
+			htmlString = htmlString.replace(new RegExp('{{' + i + '}}', 'g'), dataObject[i]);
+		}
+	}
+	
+	return htmlString;
+};
+
+const debounceTimeouts = [];
+const debounce = (id, waitMS, callback) => {
+	if (debounceTimeouts[id] == null) {
+		debounceTimeouts[id] = setTimeout(callback, waitMS);
+	} else {
+		clearTimeout(debounceTimeouts[id]);
+		debounceTimeouts[id] = null;
+		debounce(id, waitMS, callback);
 	}
 };
 
